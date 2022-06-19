@@ -118,9 +118,11 @@ class DZipFile:
         return f"{self.__class__.__name__} object of size={size}"
 
 
-def save_dzip(file: str | io.BytesIO, data: pd.DataFrame, meta: Metadata, compress: bool = True) -> None:
+def save_dzip(
+    file: str | io.BytesIO, data: pd.DataFrame, meta: Metadata, compress: bool = True
+) -> None:
     compression = zipfile.ZIP_DEFLATED if compress else zipfile.ZIP_STORED
-    
+
     with zipfile.ZipFile(file, "w", compression) as zf:
         with zf.open("data.csv", "w") as f:
             data.to_csv(f, index=False)
@@ -140,21 +142,30 @@ def spss_to_dzip(sav_filepath: str, file: str | io.BytesIO) -> None:
 
 @overload
 def read_dzip(
-    filepath: str, metadataonly: bool = False, chunksize: None = ..., **kwargs
+    file: str | io.BytesIO,
+    metadataonly: bool = False,
+    chunksize: None = ...,
+    **kwargs,
 ) -> tuple[pd.DataFrame, Metadata]:...
 @overload
 def read_dzip(
-    filepath: str, metadataonly: bool = False, chunksize: int = ..., **kwargs
+    file: str | io.BytesIO,
+    metadataonly: bool = False,
+    chunksize: int = ...,
+    **kwargs,
 ) -> tuple[TextFileReader, Metadata]:...
 
 
 def read_dzip(
-    filepath: str, metadataonly: bool = False, chunksize: int | None = None, **kwargs
+    file: str | io.BytesIO,
+    metadataonly: bool = False,
+    chunksize: int | None = None,
+    **kwargs,
 ) -> tuple[pd.DataFrame | TextFileReader, Metadata]:
 
-    file = DZipFile(filepath)
+    dzfile = DZipFile(file)
 
-    meta = file.meta()
+    meta = dzfile.meta()
 
     if metadataonly:
         return (
@@ -162,7 +173,7 @@ def read_dzip(
             meta,
         )
 
-    return file.to_pandas(chunksize, **kwargs), meta
+    return dzfile.to_pandas(chunksize, **kwargs), meta
 
 
 def _sizeof_fmt(num, suffix="B"):
